@@ -7,7 +7,6 @@ import android.support.v7.app.AppCompatActivity
 import android.support.v4.app.Fragment
 import android.support.v4.app.FragmentManager
 import android.support.v4.app.FragmentPagerAdapter
-import android.support.v4.view.ViewPager
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.Menu
@@ -17,6 +16,9 @@ import android.view.ViewGroup
 
 import kotlinx.android.synthetic.main.activity_intro.*
 import kotlinx.android.synthetic.main.fragment_intro.view.*
+import lemonpie.com.br.lemonpie.db.AppDatabase
+import lemonpie.com.br.lemonpie.db.utils.DatabaseInitMock
+import java.util.*
 
 class IntroActivity : AppCompatActivity() {
 
@@ -29,6 +31,7 @@ class IntroActivity : AppCompatActivity() {
      * [android.support.v4.app.FragmentStatePagerAdapter].
      */
     private var mSectionsPagerAdapter: SectionsPagerAdapter? = null
+    private var mDb: AppDatabase? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -50,8 +53,37 @@ class IntroActivity : AppCompatActivity() {
                 .setAction("Action", null).show()
         }
 
+        mDb = AppDatabase.getInMemoryDatabase(applicationContext)
+
+        populateDb()
+
+        fetchData()
+
     }
 
+
+    override fun onDestroy() {
+        AppDatabase.destroyInstance()
+        super.onDestroy()
+    }
+
+    private fun populateDb() {
+        DatabaseInitMock.populateSync(mDb!!)
+    }
+
+    private fun fetchData() {
+        // Note: this kind of logic should not be in an activity.
+        val sb = StringBuilder()
+        val youngUsers = mDb?.userModel()!!.findUsersYoungerThan(35)
+        for (youngUser in youngUsers) {
+            sb.append(
+                String.format(
+                    Locale.US,
+                    "%s, %s (%d)\n", youngUser.lastName, youngUser.name, youngUser.age
+                )
+            )
+        }
+    }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         // Inflate the menu; this adds items to the action bar if it is present.
